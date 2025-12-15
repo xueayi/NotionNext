@@ -1,0 +1,75 @@
+name: Build and Deploy NotionNext
+
+on:
+  push:
+    branches:
+      - blog.xueayi.site  # 监听你的分支
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 准备 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      # 3. 安装依赖 (在 GitHub 的虚拟机上跑，不耗你服务器资源)
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      # 4. 编译 (这是最耗内存的一步)
+      - name: Build Project
+        env:
+          # 如果你的 NotionNext 版本在编译时需要获取数据，必须加上这个 ID
+          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }} 
+          NEXT_PUBLIC_THEME: 'hexo' # 这里根据你的 hexo 主题配置，或者在 actions 里不写，读你代码里的配置
+        run: yarn build
+
+      # 5. 将编译产物同步到服务器
+      # 我们只传必要的文件：.next 文件夹, public 文件夹, package.json, yarn.lock
+      - name: Deploy to Server via Rsync
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvO --delete"
+          SOURCE: ".next/ public/ package.json yarn.lock next.config.js" # 同步这些关键文件
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: "/home/xueayi/NotionNext/" # 你的服务器目录
+          EXCLUDE: "/node_modules/" # 不要同步 node_modules，太大了，传输很慢
+
+      # 6. 在服务器上重启服务
+      - name: Restart Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/xueayi/NotionNext
+            
+            # 1. 安装生产环境依赖 (服务器只需运行，不需要 devDependencies，这步很快且省内存)
+            yarn install --production
+
+            # 2. 停止旧进程 (防止端口冲突)
+            # 尝试杀掉占用 3000 端口的进程，或者杀掉之前的 node 进程
+            echo "Stopping old process..."
+            pkill -f "next-server" || true
+            pkill -f "yarn start" || true
+            # 如果上面杀不掉，用端口杀：
+            lsof -t -i:3000 | xargs -r kill
+
+            # 3. 启动新进程
+            echo "Starting new process..."
+            # 使用 nohup 后台启动
+            nohup yarn start >/dev/null 2>&1 &
+            
+            echo "Deployment finished!"
