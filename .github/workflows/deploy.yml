@@ -31,7 +31,9 @@ jobs:
           # 如果你的 NotionNext 版本在编译时需要获取数据，必须加上这个 ID
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }} 
           NEXT_PUBLIC_THEME: 'hexo' # 这里根据你的 hexo 主题配置，或者在 actions 里不写，读你代码里的配置
-        run: yarn build
+        run: |
+          yarn build
+          git checkout package.json
 
       # 5. 将编译产物同步到服务器
       # 我们只传必要的文件：.next 文件夹, public 文件夹, package.json, yarn.lock
