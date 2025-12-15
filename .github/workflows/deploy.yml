@@ -32,8 +32,12 @@ jobs:
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }} 
           NEXT_PUBLIC_THEME: 'hexo' # 这里根据你的 hexo 主题配置，或者在 actions 里不写，读你代码里的配置
         run: |
+          cp package.json package.json.bak
           yarn build
-          git checkout package.json
+          rm package.json
+          mv package.json.bak package.json
+          echo "Checking package.json content:"
+          head -n 10 package.json
 
       # 5. 将编译产物同步到服务器
       # 我们只传必要的文件：.next 文件夹, public 文件夹, package.json, yarn.lock
@@ -42,11 +46,11 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ARGS: "-rlgoDzvO --delete"
-          SOURCE: "." # 同步所有文件（排除模式在 EXCLUDE 中定义）
+          SOURCE: ".next/ public/ package.json yarn.lock next.config.js blog.config.js lib/ themes/" # 同步这些关键文件
           REMOTE_HOST: ${{ secrets.SERVER_IP }}
           REMOTE_USER: ${{ secrets.SERVER_USER }}
           TARGET: "/home/xueayi/NotionNext/" # 你的服务器目录
-          EXCLUDE: "/dist/ /node_modules/ /.git/ /.github/ /.vscode/ /.idea/ /.DS_Store" # 排除不需要的文件
+          EXCLUDE: "/node_modules/" # 不要同步 node_modules，太大了，传输很慢
 
       # 6. 在服务器上重启服务
       - name: Restart Server via SSH
