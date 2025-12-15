@@ -55,6 +55,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/xueayi/NotionNext
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # 加载 nvm
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # 加载 nvm bash_completion
+
+            # 确认一下环境是否加载成功 (调试用)
+            echo "Current Node version:"
+            node -v
+            echo "Current Yarn version:"
+            yarn -v
             
             # 1. 安装生产环境依赖 (服务器只需运行，不需要 devDependencies，这步很快且省内存)
             yarn install --production
