@@ -72,7 +72,6 @@ jobs:
             # 尝试杀掉占用 3000 端口的进程，或者杀掉之前的 node 进程
             echo "Stopping old process..."
             pkill -f "next-server" || true
-            pkill -f "yarn start" || true
             # 如果上面杀不掉，用端口杀：
             lsof -t -i:3000 | xargs -r kill
 
