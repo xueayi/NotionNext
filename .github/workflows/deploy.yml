@@ -42,11 +42,11 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ARGS: "-rlgoDzvO --delete"
-          SOURCE: ".next/ public/ package.json yarn.lock next.config.js" # 同步这些关键文件
+          SOURCE: "." # 同步所有文件（排除模式在 EXCLUDE 中定义）
           REMOTE_HOST: ${{ secrets.SERVER_IP }}
           REMOTE_USER: ${{ secrets.SERVER_USER }}
           TARGET: "/home/xueayi/NotionNext/" # 你的服务器目录
-          EXCLUDE: "/node_modules/" # 不要同步 node_modules，太大了，传输很慢
+          EXCLUDE: "/dist/ /node_modules/ /.git/ /.github/ /.vscode/ /.idea/ /.DS_Store" # 排除不需要的文件
 
       # 6. 在服务器上重启服务
       - name: Restart Server via SSH
