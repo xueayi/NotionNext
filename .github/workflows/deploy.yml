@@ -71,7 +71,7 @@ jobs:
             # 2. 停止旧进程 (防止端口冲突)
             # 尝试杀掉占用 3000 端口的进程，或者杀掉之前的 node 进程
             echo "Stopping old process..."
-            pkill -f "next-server" || true
+            # pkill -f 可能会误杀当前脚本（因为脚本内容本身包含匹配字符串），改用端口号杀进程
             # 如果上面杀不掉，用端口杀：
             lsof -t -i:3000 | xargs -r kill
 
