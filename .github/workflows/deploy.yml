@@ -60,14 +60,18 @@ jobs:
           cp -r public deploy_temp/
           cp -r lib deploy_temp/
           cp -r themes deploy_temp/
+          cp -r conf deploy_temp/           # blog.config.js 依赖此目录下的配置文件
           cp package.json deploy_temp/
           cp yarn.lock deploy_temp/
           cp next.config.js deploy_temp/
           cp blog.config.js deploy_temp/
           
-          # 最终验证 package.json
+          # 最终验证部署目录结构
           echo "✅ Final package.json in deploy_temp:"
           head -n 5 deploy_temp/package.json
+          echo ""
+          echo "✅ Checking conf/ directory:"
+          ls -la deploy_temp/conf/
 
       # 6. 将编译产物同步到服务器
       - name: Deploy to Server via Rsync
