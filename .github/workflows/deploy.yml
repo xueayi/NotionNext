@@ -1,6 +1,6 @@
-name: Deploy to Server
+name: Build and Deploy to Server
 
-# 触发条件：推送到 main 分支或手动触发
+# 触发条件：推送到 blog.xueayi.site 分支或手动触发
 on:
   push:
     branches: [blog.xueayi.site]
@@ -12,111 +12,148 @@ on:
         default: 'full'
         type: choice
         options:
-          - full      # 完整部署（拉取代码 + 安装依赖 + 构建 + 重启）
+          - full      # 完整部署（编译 + 同步 + 重启）
           - restart   # 仅重启服务
-          - rebuild   # 重新构建并重启
 
 env:
   # 服务器上的项目目录
-  PROJECT_DIR: /var/www/notion-next
+  PROJECT_DIR: ~/blog
   # PM2 进程名称
   PM2_APP_NAME: notion-next
 
 jobs:
-  deploy:
-    name: Deploy to Production Server
+  build:
+    name: Build on GitHub
     runs-on: ubuntu-latest
+    # 仅在完整部署时执行构建
+    if: github.event.inputs.deploy_type != 'restart'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 部署到服务器
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Create .env file
+        run: |
+          echo "NOTION_PAGE_ID=${{ secrets.NOTION_PAGE_ID }}" >> .env
+
+      - name: Build project
+        run: npm run build
         env:
           NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+
+      - name: Prepare deployment files
+        run: |
+          # 创建部署目录
+          mkdir -p deploy
+          
+          # 复制必要的文件
+          cp -r .next deploy/
+          cp -r public deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp next.config.js deploy/ 2>/dev/null || true
+          cp .env deploy/ 2>/dev/null || true
+          
+          # 复制其他可能需要的配置文件
+          cp -r themes deploy/ 2>/dev/null || true
+          cp -r lib deploy/ 2>/dev/null || true
+          
+          echo "部署文件准备完成"
+          ls -la deploy/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: deploy/
+          retention-days: 1
+
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: always() && (needs.build.result == 'success' || github.event.inputs.deploy_type == 'restart')
+    
+    steps:
+      - name: Download build artifacts
+        if: github.event.inputs.deploy_type != 'restart'
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: deploy/
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Sync files to server
+        if: github.event.inputs.deploy_type != 'restart'
+        run: |
+          echo "====== 开始同步文件到服务器 ======"
+          
+          # 使用 rsync 同步文件
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            deploy/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/blog/
+          
+          echo "====== 文件同步完成 ======"
+
+      - name: Install dependencies and restart on server
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command_timeout: 30m
-          envs: NOTION_PAGE_ID
+          command_timeout: 15m
           script: |
             set -e
             
-            echo "====== 开始部署 NotionNext ======"
+            echo "====== 服务器端部署 ======"
             echo "部署时间: $(date '+%Y-%m-%d %H:%M:%S')"
-            echo "部署类型: ${{ github.event.inputs.deploy_type || 'full' }}"
             
-            # 确保项目目录存在
-            if [ ! -d "${{ env.PROJECT_DIR }}" ]; then
-              echo "项目目录不存在，正在克隆仓库..."
-              sudo mkdir -p ${{ env.PROJECT_DIR }}
-              sudo chown -R $USER:$USER ${{ env.PROJECT_DIR }}
-              git clone https://github.com/${{ github.repository }}.git ${{ env.PROJECT_DIR }}
-            fi
-            
-            cd ${{ env.PROJECT_DIR }}
+            cd ~/blog
             
             # 设置 Node.js 环境（使用 nvm 或系统 node）
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
-            # 检查 Node.js 版本
             echo "Node.js 版本: $(node -v)"
             echo "npm 版本: $(npm -v)"
             
             # 获取部署类型
             DEPLOY_TYPE="${{ github.event.inputs.deploy_type || 'full' }}"
             
-            # 如果是仅重启，直接重启服务
-            if [ "$DEPLOY_TYPE" = "restart" ]; then
-              echo "====== 仅重启服务 ======"
-              pm2 restart ${{ env.PM2_APP_NAME }} || pm2 start npm --name "${{ env.PM2_APP_NAME }}" -- start
-              pm2 save
-              echo "====== 重启完成 ======"
-              exit 0
+            # 如果不是仅重启，安装生产依赖
+            if [ "$DEPLOY_TYPE" != "restart" ]; then
+              echo "====== 安装生产依赖 ======"
+              npm ci --legacy-peer-deps --production || npm install --legacy-peer-deps --production
             fi
             
-            # 拉取最新代码
-            echo "====== 拉取最新代码 ======"
-            git fetch origin blog.xueayi.site
-            git reset --hard origin/blog.xueayi.site
-            
-            # 更新 .env 文件
-            echo "====== 更新环境变量 ======"
-            if [ -n "$NOTION_PAGE_ID" ]; then
-              # 更新或添加 NOTION_PAGE_ID
-              if grep -q "^NOTION_PAGE_ID=" .env 2>/dev/null; then
-                sed -i "s|^NOTION_PAGE_ID=.*|NOTION_PAGE_ID=$NOTION_PAGE_ID|" .env
-              else
-                echo "NOTION_PAGE_ID=$NOTION_PAGE_ID" >> .env
-              fi
-              echo "NOTION_PAGE_ID 已更新"
-            fi
-            
-            # 安装依赖（仅在完整部署时）
-            if [ "$DEPLOY_TYPE" = "full" ]; then
-              echo "====== 安装依赖 ======"
-              npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-            fi
-            
-            # 构建项目
-            echo "====== 构建项目 ======"
-            npm run build
-            
-            # 使用 PM2 管理服务
-            echo "====== 启动/重启服务 ======"
-            
-            # 检查 PM2 是否已安装
+            # 确保 PM2 已安装
             if ! command -v pm2 &> /dev/null; then
               echo "PM2 未安装，正在安装..."
               npm install -g pm2
             fi
             
-            # 检查进程是否存在
+            # 使用 PM2 管理服务
+            echo "====== 启动/重启服务 ======"
+            
             if pm2 describe ${{ env.PM2_APP_NAME }} > /dev/null 2>&1; then
               echo "重启现有服务..."
               pm2 restart ${{ env.PM2_APP_NAME }}
@@ -134,6 +171,10 @@ jobs:
             
             echo "====== 部署完成 ======"
             echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+
+      - name: Cleanup SSH Key
+        if: always()
+        run: rm -f ~/.ssh/id_rsa
 
       # 部署结果通知
       - name: Deployment Status
