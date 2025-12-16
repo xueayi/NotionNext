@@ -23,7 +23,7 @@ jobs:
 
       # 3. 安装依赖 (在 GitHub 的虚拟机上跑，不耗你服务器资源)
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       # 4. 编译 (这是最耗内存的一步)
       - name: Build Project
@@ -117,9 +117,18 @@ jobs:
             # 1. 安装生产环境依赖 (服务器只需运行，不需要 devDependencies，这步很快且省内存)
             yarn install --production
 
-            # 2. 停止旧进程 (防止端口冲突)
+            # 2. 停止旧进程 (防止端口冲突，同时处理 IPv4 和 IPv6)
             echo "Stopping old process..."
-            lsof -t -i:3000 | xargs -r kill
+            # 使用 fuser 杀掉所有占用 3000 端口的进程（包括 IPv6）
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 2
+            # 如果 fuser 不可用，使用备用方案
+            if command -v fuser > /dev/null 2>&1; then
+              fuser -k 3000/tcp 2>/dev/null || true
+            else
+              # 备用方案：使用 ss + kill
+              ss -tlnp 'sport = :3000' | grep -oP 'pid=\K\d+' | xargs -r kill -9 2>/dev/null || true
+            fi
 
             # 3. 启动新进程
             echo "Starting new process..."
