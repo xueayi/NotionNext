@@ -1,187 +1,132 @@
-name: Build and Deploy to Server
+name: Build and Deploy NotionNext
 
-# 触发条件：推送到 blog.xueayi.site 分支或手动触发
 on:
   push:
-    branches: [blog.xueayi.site]
-  workflow_dispatch:
-    inputs:
-      deploy_type:
-        description: '部署类型'
-        required: true
-        default: 'full'
-        type: choice
-        options:
-          - full      # 完整部署（编译 + 同步 + 重启）
-          - restart   # 仅重启服务
-
-env:
-  # 服务器上的项目目录
-  PROJECT_DIR: ~/blog
-  # PM2 进程名称
-  PM2_APP_NAME: notion-next
+    branches:
+      - blog.xueayi.site  # 监听你的分支
 
 jobs:
-  build:
-    name: Build on GitHub
+  build-and-deploy:
     runs-on: ubuntu-latest
-    # 仅在完整部署时执行构建
-    if: github.event.inputs.deploy_type != 'restart'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 准备 Node.js 环境
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'yarn'
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      # 3. 安装依赖 (在 GitHub 的虚拟机上跑，不耗你服务器资源)
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
 
-      - name: Create .env file
-        run: |
-          echo "NOTION_PAGE_ID=${{ secrets.NOTION_PAGE_ID }}" >> .env
-
-      - name: Build project
-        run: npm run build
+      # 4. 编译 (这是最耗内存的一步)
+      - name: Build Project
         env:
-          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
-
-      - name: Prepare deployment files
+          # 如果你的 NotionNext 版本在编译时需要获取数据，必须加上这个 ID
+          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }} 
+          NEXT_PUBLIC_THEME: 'hexo' # 这里根据你的 hexo 主题配置，或者在 actions 里不写，读你代码里的配置
         run: |
-          # 创建部署目录
-          mkdir -p deploy
+          # 备份原始 package.json
+          cp package.json package.json.original
           
-          # 复制必要的文件
-          cp -r .next deploy/
-          cp -r public deploy/
-          cp package.json deploy/
-          cp package-lock.json deploy/
-          cp next.config.js deploy/ 2>/dev/null || true
-          cp .env deploy/ 2>/dev/null || true
+          yarn build
           
-          # 复制其他可能需要的配置文件
-          cp -r themes deploy/ 2>/dev/null || true
-          cp -r lib deploy/ 2>/dev/null || true
+          # 构建后强制恢复原始 package.json（Next.js 可能会修改它）
+          cp package.json.original package.json
+          rm package.json.original
           
-          echo "部署文件准备完成"
-          ls -la deploy/
+          # 删除 .next 目录内可能存在的 package.json（防止 rsync 覆盖）
+          find .next -name "package.json" -delete 2>/dev/null || true
+          
+          echo "✅ Verifying root package.json content:"
+          head -n 20 package.json
+          echo ""
+          echo "✅ Checking package.json has 'scripts' field:"
+          grep -q '"scripts"' package.json && echo "OK: scripts field found" || echo "ERROR: scripts field missing!"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: deploy/
-          retention-days: 1
-
-  deploy:
-    name: Deploy to Server
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: always() && (needs.build.result == 'success' || github.event.inputs.deploy_type == 'restart')
-    
-    steps:
-      - name: Download build artifacts
-        if: github.event.inputs.deploy_type != 'restart'
-        uses: actions/download-artifact@v4
-        with:
-          name: build-output
-          path: deploy/
-
-      - name: Setup SSH Key
+      # 5. 准备同步目录 (将所有需要同步的文件放到一个临时目录，避免路径混乱)
+      - name: Prepare Deploy Directory
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-      - name: Sync files to server
-        if: github.event.inputs.deploy_type != 'restart'
-        run: |
-          echo "====== 开始同步文件到服务器 ======"
+          mkdir -p deploy_temp
           
-          # 使用 rsync 同步文件
-          rsync -avz --delete \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-            deploy/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/blog/
+          # 复制必要的文件到临时目录
+          cp -r .next deploy_temp/
+          cp -r public deploy_temp/
+          cp -r lib deploy_temp/
+          cp -r themes deploy_temp/
+          cp package.json deploy_temp/
+          cp yarn.lock deploy_temp/
+          cp next.config.js deploy_temp/
+          cp blog.config.js deploy_temp/
           
-          echo "====== 文件同步完成 ======"
+          # 最终验证 package.json
+          echo "✅ Final package.json in deploy_temp:"
+          head -n 5 deploy_temp/package.json
 
-      - name: Install dependencies and restart on server
-        uses: appleboy/ssh-action@v1.0.3
+      # 6. 将编译产物同步到服务器
+      - name: Deploy to Server via Rsync
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rlgoDzvO --delete"
+          SOURCE: "deploy_temp/"
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: "/home/xueayi/NotionNext/"
+          EXCLUDE: "/node_modules/"
+
+      # 7. 在服务器上重启服务
+      - name: Restart Server via SSH
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          command_timeout: 15m
           script: |
-            set -e
-            
-            echo "====== 服务器端部署 ======"
-            echo "部署时间: $(date '+%Y-%m-%d %H:%M:%S')"
-            
-            cd ~/blog
-            
-            # 设置 Node.js 环境（使用 nvm 或系统 node）
+            cd /home/xueayi/NotionNext
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # 加载 nvm
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # 加载 nvm bash_completion
+
+            # 确认一下环境是否加载成功 (调试用)
+            echo "Current Node version:"
+            node -v
+            echo "Current Yarn version:"
+            yarn -v
             
-            echo "Node.js 版本: $(node -v)"
-            echo "npm 版本: $(npm -v)"
-            
-            # 获取部署类型
-            DEPLOY_TYPE="${{ github.event.inputs.deploy_type || 'full' }}"
-            
-            # 如果不是仅重启，安装生产依赖
-            if [ "$DEPLOY_TYPE" != "restart" ]; then
-              echo "====== 安装生产依赖 ======"
-              npm ci --legacy-peer-deps --production || npm install --legacy-peer-deps --production
-            fi
-            
-            # 确保 PM2 已安装
-            if ! command -v pm2 &> /dev/null; then
-              echo "PM2 未安装，正在安装..."
-              npm install -g pm2
-            fi
-            
-            # 使用 PM2 管理服务
-            echo "====== 启动/重启服务 ======"
-            
-            if pm2 describe ${{ env.PM2_APP_NAME }} > /dev/null 2>&1; then
-              echo "重启现有服务..."
-              pm2 restart ${{ env.PM2_APP_NAME }}
+            # 验证 package.json 是否完整
+            echo "✅ Verifying package.json on server:"
+            head -n 10 package.json
+            if grep -q '"scripts"' package.json; then
+              echo "✅ package.json is complete!"
             else
-              echo "启动新服务..."
-              pm2 start npm --name "${{ env.PM2_APP_NAME }}" -- start
+              echo "❌ ERROR: package.json is incomplete! Aborting deployment."
+              exit 1
             fi
             
-            # 保存 PM2 配置
-            pm2 save
-            
-            # 显示服务状态
-            echo "====== 服务状态 ======"
-            pm2 status
-            
-            echo "====== 部署完成 ======"
-            echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+            # 1. 安装生产环境依赖 (服务器只需运行，不需要 devDependencies，这步很快且省内存)
+            yarn install --production
 
-      - name: Cleanup SSH Key
-        if: always()
-        run: rm -f ~/.ssh/id_rsa
+            # 2. 停止旧进程 (防止端口冲突)
+            echo "Stopping old process..."
+            lsof -t -i:3000 | xargs -r kill
 
-      # 部署结果通知
-      - name: Deployment Status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "✅ 部署成功！"
-          else
-            echo "❌ 部署失败，请检查日志"
-          fi
+            # 3. 启动新进程
+            echo "Starting new process..."
+            nohup yarn start >/dev/null 2>&1 &
+            
+            # 等待几秒确认进程启动
+            sleep 3
+            if lsof -i:3000 > /dev/null 2>&1; then
+              echo "✅ Server started successfully on port 3000!"
+            else
+              echo "⚠️ Warning: Server may not have started. Check logs."
+            fi
+            
+            echo "🎉 Deployment finished!"
