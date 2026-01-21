@@ -2,8 +2,8 @@ name: Build and Deploy NotionNext
 
 on:
   push:
-    branches:
-      - blog.xueayi.site  # 监听你的分支
+    tags:
+      - '*blog*'  # 监听你的分支  
 
 jobs:
   build-and-deploy:

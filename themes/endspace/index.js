@@ -84,11 +84,10 @@ const LayoutBase = (props) => {
           >
             {/* Main content - Centered */}
             <div
-              className={`${
-                fullWidth
-                  ? 'w-full'
-                  : 'max-w-4xl w-full mx-auto'
-              }`}
+              className={`${fullWidth
+                ? 'w-full'
+                : 'max-w-4xl w-full mx-auto'
+                }`}
             >
               <Transition
                 show={!onLoading}
@@ -105,10 +104,10 @@ const LayoutBase = (props) => {
                 {children}
               </Transition>
             </div>
-            
+
             {/* Spacer for structure consistency */}
             {!fullWidth && (
-               <div />
+              <div />
             )}
           </div>
         </div>
@@ -180,13 +179,13 @@ const LayoutSlug = (props) => {
             {/* Post Metadata Header */}
             <PostMeta post={post} />
 
-             {/* Article Content Frame */}
+            {/* Article Content Frame */}
             <div id="article-wrapper" className="endspace-frame p-8 md:p-12 mb-12">
-               {/* Content Watermark/Background decoration */}
-               <div className="absolute top-4 right-4 text-[var(--endspace-text-muted)] opacity-10 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black pointer-events-none select-none z-0">
-                 CLOUD09
-               </div>
-               
+              {/* Content Watermark/Background decoration */}
+              <div className="absolute top-4 right-4 text-[var(--endspace-text-muted)] opacity-10 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-black pointer-events-none select-none z-0">
+                XUEAYI
+              </div>
+
               <div className="relative z-10">
                 <NotionPage post={post} />
               </div>
@@ -194,7 +193,7 @@ const LayoutSlug = (props) => {
               {/* Footer of the card - Share Bar */}
               {siteConfig('POST_SHARE_BAR_ENABLE') === 'true' && (
                 <div className="mt-12 pt-8 border-t border-[var(--endspace-border-base)] flex justify-end items-center">
-                   <ShareBar post={post} />
+                  <ShareBar post={post} />
                 </div>
               )}
             </div>
@@ -238,10 +237,10 @@ const Layout404 = (props) => {
       <div className="endspace-card p-12 text-center tech-corner max-w-2xl mx-auto">
         <div className="mb-8">
           <div className="relative flex justify-center items-center mb-6">
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-[#FBFB46] opacity-90 pointer-events-none" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-             <div className="relative text-8xl font-black text-black z-10">
-               404
-             </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-[#FBFB46] opacity-90 pointer-events-none" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+            <div className="relative text-8xl font-black text-black z-10">
+              404
+            </div>
           </div>
           <div className="text-2xl font-bold text-[var(--endspace-text-primary)] mb-2">PAGE_NOT_FOUND</div>
           <div className="text-[var(--endspace-text-muted)] text-sm font-mono">
