@@ -72,7 +72,7 @@ export const MobileNav = (props) => {
   const { siteInfo } = useGlobal()
   const [activeTab, setActiveTab] = useState('Home')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  
+
   // Get avatar from props or global context
   const avatarUrl = props?.siteInfo?.icon || siteInfo?.icon || siteConfig('AVATAR')
 
@@ -83,7 +83,7 @@ export const MobileNav = (props) => {
     { name: 'Tag', path: '/tag', show: siteConfig('ENDSPACE_MENU_TAG', null, CONFIG) },
     { name: 'Archive', path: '/archive', show: siteConfig('ENDSPACE_MENU_ARCHIVE', null, CONFIG) },
     { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Friends', path: '/friend' },
+    { name: 'Friends', path: '/morelinks' },
     { name: 'Search', path: '/search', show: siteConfig('ENDSPACE_MENU_SEARCH', null, CONFIG) }
   ].filter(item => item.show !== false)
 
@@ -112,7 +112,7 @@ export const MobileNav = (props) => {
     else if (path.includes('/tag')) setActiveTab('Tag')
     else if (path.includes('/archive')) setActiveTab('Archive')
     else if (path.includes('/search')) setActiveTab('Search')
-    else if (path.includes('/friend')) setActiveTab('Friends')
+    else if (path.includes('/morelinks')) setActiveTab('Friends')
     else if (path.includes('/portfolio')) setActiveTab('Portfolio')
   }, [router.asPath])
 
@@ -158,9 +158,9 @@ export const MobileNav = (props) => {
       <nav className="fixed top-0 left-0 right-0 z-50 md:hidden bg-white border-b border-[var(--endspace-border-base)] safe-area-top">
         <div className="flex items-center justify-between h-20 px-5">
           {/* Left: Avatar */}
-          <SmartLink href="/cloud09" title="Profile" className="flex-shrink-0 flex items-center">
+          <SmartLink href="/aboutme" title="Profile" className="flex-shrink-0 flex items-center">
             <div className="w-14 h-14 rounded-full overflow-hidden transition-colors">
-              <img 
+              <img
                 src={avatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"
@@ -184,18 +184,16 @@ export const MobileNav = (props) => {
       </nav>
 
       {/* Full Screen Menu Overlay */}
-      <div 
-        className={`fixed inset-0 z-40 md:hidden bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed inset-0 z-40 md:hidden bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={() => setIsMenuOpen(false)}
       />
 
       {/* Slide-in Menu Panel */}
-      <div 
-        className={`fixed top-20 left-0 right-0 bottom-0 z-40 md:hidden bg-white transition-transform duration-300 ease-out overflow-y-auto ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+      <div
+        className={`fixed top-20 left-0 right-0 bottom-0 z-40 md:hidden bg-white transition-transform duration-300 ease-out overflow-y-auto ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {/* Navigation Items */}
         <div className="flex flex-col items-start p-6 space-y-2">
@@ -203,14 +201,13 @@ export const MobileNav = (props) => {
             <SmartLink
               key={item.name}
               href={item.path}
-              className={`flex items-center gap-4 py-3 w-full transition-all group ${
-                activeTab === item.name
-                  ? 'text-black font-bold'
-                  : 'text-[var(--endspace-text-secondary)] hover:text-black'
-              }`}
+              className={`flex items-center gap-4 py-3 w-full transition-all group ${activeTab === item.name
+                ? 'text-black font-bold'
+                : 'text-[var(--endspace-text-secondary)] hover:text-black'
+                }`}
             >
               <div className={`transition-colors ${activeTab === item.name ? 'text-black' : 'text-gray-400 group-hover:text-black'}`}>
-                 {renderIcon(item.name)}
+                {renderIcon(item.name)}
               </div>
               <span className="text-xl font-medium">{item.name}</span>
             </SmartLink>

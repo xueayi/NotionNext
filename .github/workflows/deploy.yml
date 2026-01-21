@@ -2,8 +2,8 @@ name: Build and Deploy NotionNext
 
 on:
   push:
-    branches:
-      - blog.xueayi.site  # 监听你的分支
+    tags:
+      - '*endspace*'  # 监听带有 endspace 的标签
 
 jobs:
   build-and-deploy:

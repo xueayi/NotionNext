@@ -30,7 +30,7 @@ import Compass3FillIcon from 'remixicon-react/Compass3FillIcon'
 import EarthFillIcon from 'remixicon-react/EarthFillIcon'
 import ProfileFillIcon from 'remixicon-react/ProfileFillIcon'
 
-  // Social Icons (Solid)
+// Social Icons (Solid)
 import GithubFillIcon from 'remixicon-react/GithubFillIcon'
 import WeiboFillIcon from 'remixicon-react/WeiboFillIcon'
 import BilibiliFillIcon from 'remixicon-react/BilibiliFillIcon'
@@ -75,7 +75,7 @@ export const SideNav = (props) => {
   const [indicatorStyle, setIndicatorStyle] = useState({ top: 0, opacity: 0 })
   const navRef = useRef(null)
   const itemRefs = useRef({})
-  
+
   // Get avatar from props or global context (Hexo way uses props)
   const avatarUrl = props?.siteInfo?.icon || siteInfo?.icon || siteConfig('AVATAR')
 
@@ -86,7 +86,7 @@ export const SideNav = (props) => {
     { name: 'Tag', path: '/tag', show: siteConfig('ENDSPACE_MENU_TAG', null, CONFIG) },
     { name: 'Archive', path: '/archive', show: siteConfig('ENDSPACE_MENU_ARCHIVE', null, CONFIG) },
     { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Friends', path: '/friend' },
+    { name: 'Friends', path: '/morelinks' },
     { name: 'Search', path: '/search', show: siteConfig('ENDSPACE_MENU_SEARCH', null, CONFIG) }
   ].filter(item => item.show !== false)
 
@@ -131,9 +131,9 @@ export const SideNav = (props) => {
     else if (path.includes('/tag')) newTab = 'Tag'
     else if (path.includes('/archive')) newTab = 'Archive'
     else if (path.includes('/search')) newTab = 'Search'
-    else if (path.includes('/friend')) newTab = 'Friends'
+    else if (path.includes('/morelinks')) newTab = 'Friends'
     else if (path.includes('/portfolio')) newTab = 'Portfolio'
-    
+
     setActiveTab(newTab)
   }, [router.asPath])
 
@@ -151,8 +151,8 @@ export const SideNav = (props) => {
     const IconComponent = IconComponents[name]
     if (!IconComponent) return null
     return (
-      <IconComponent 
-        size={20} 
+      <IconComponent
+        size={20}
         stroke={1.5}
         className={`transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
       />
@@ -172,16 +172,16 @@ export const SideNav = (props) => {
   }
 
   return (
-    <div 
+    <div
       className={`fixed left-0 top-0 bottom-0 z-40 hidden md:flex flex-col bg-[var(--endspace-bg-base)] border-r border-[var(--endspace-border-base)] transition-all duration-300 ease-in-out ${isHovered ? 'w-[16rem] shadow-2xl' : 'w-[5rem]'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Avatar Section - Top of sidebar, clickable to personal page */}
       <div className="flex-shrink-0 py-6 flex flex-col items-center">
-        <SmartLink href="/cloud09" title="Profile">
+        <SmartLink href="/aboutme" title="Profile">
           <div className={`transition-all duration-300 cursor-pointer hover:scale-105 ${isHovered ? 'w-[5rem] h-[5rem]' : 'w-[3rem] h-[3rem]'}`}>
-            <img 
+            <img
               src={avatarUrl}
               alt="Avatar"
               className="w-full h-full rounded-full object-cover shadow-lg transition-colors"
@@ -190,7 +190,7 @@ export const SideNav = (props) => {
         </SmartLink>
         {/* Author Info - shown when expanded */}
         <div className={`mt-3 text-center transition-all duration-300 overflow-hidden ${isHovered ? 'opacity-100 max-h-24' : 'opacity-0 max-h-0'}`}>
-          <SmartLink href="/cloud09" className="hover:text-[var(--endspace-accent-yellow)] transition-colors">
+          <SmartLink href="/aboutme" className="hover:text-[var(--endspace-accent-yellow)] transition-colors">
             <div className="text-sm font-bold text-[var(--endspace-text-primary)] uppercase tracking-wider">
               {siteConfig('AUTHOR') || 'Cloud'}
             </div>
@@ -204,16 +204,16 @@ export const SideNav = (props) => {
       {/* Navigation Items */}
       <div ref={navRef} className="flex-1 py-4 flex flex-col gap-2 overflow-y-auto overflow-x-hidden relative">
         {/* Animated Active Indicator Bar - Higher z-index */}
-        <div 
+        <div
           className="absolute left-0 w-1.5 h-[3rem] bg-[var(--endspace-text-primary)] transition-all duration-300 ease-out z-10"
           style={{ top: indicatorStyle.top, opacity: indicatorStyle.opacity }}
         />
-        
+
         {menuItems.map((item) => {
           const isActive = activeTab === item.name
           return (
             <SmartLink key={item.name} href={item.path}>
-              <div 
+              <div
                 ref={el => itemRefs.current[item.name] = el}
                 className={`nier-nav-item relative h-[3rem] flex items-center cursor-pointer group transition-colors duration-300 hover:bg-[#d4d4d8] ${isActive ? 'active bg-[#d4d4d8]' : ''}`}
               >
@@ -237,64 +237,63 @@ export const SideNav = (props) => {
 
       {/* Contact Links Section - Above arrow */}
       <div className="py-3 transition-all duration-300">
-        
+
         {/* Collapsed State: Contact Button with light gray background */}
         <div className={`flex justify-center transition-all duration-300 ${isHovered ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
           <div className="w-[2.5rem] h-[2.5rem] flex items-center justify-center bg-gray-200 text-gray-500 rounded-full cursor-pointer hover:text-white hover:bg-gray-600 transition-colors">
-             <RadarFillIcon size={18} />
-           </div>
-         </div>
+            <RadarFillIcon size={18} />
+          </div>
+        </div>
 
-         {/* Expanded State: Horizontal Icon Row - Single line */}
-         <div className={`px-3 transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
-            {/* Social Icons - Horizontal Layout, single row with light gray background */}
-            <div className="flex items-center justify-center gap-1.5 flex-nowrap">
-              {/* Email Icon */}
-              {email && (
-                  <a 
-                  href={`mailto:${email}`}
-                  title={email}
+        {/* Expanded State: Horizontal Icon Row - Single line */}
+        <div className={`px-3 transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+          {/* Social Icons - Horizontal Layout, single row with light gray background */}
+          <div className="flex items-center justify-center gap-1.5 flex-nowrap">
+            {/* Email Icon */}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                title={email}
+                className="w-[1.75rem] h-[1.75rem] flex items-center justify-center bg-gray-200 text-gray-500 rounded-full hover:text-white hover:bg-gray-600 transition-colors flex-shrink-0"
+              >
+                <MailFillIcon size={14} />
+              </a>
+            )}
+
+            {/* Social Links */}
+            {socialLinks.map(({ key, svg, label }) => {
+              const url = siteConfig(key)
+              if (!url) return null
+              return (
+                <a
+                  key={key}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={label}
                   className="w-[1.75rem] h-[1.75rem] flex items-center justify-center bg-gray-200 text-gray-500 rounded-full hover:text-white hover:bg-gray-600 transition-colors flex-shrink-0"
                 >
-                  <MailFillIcon size={14} />
-               </a>
-             )}
-             
-             {/* Social Links */}
-             {socialLinks.map(({ key, svg, label }) => {
-               const url = siteConfig(key)
-               if (!url) return null
-               return (
-                 <a 
-                   key={key}
-                   href={url} 
-                   target="_blank" 
-                   rel="noreferrer"
-                   title={label}
-                   className="w-[1.75rem] h-[1.75rem] flex items-center justify-center bg-gray-200 text-gray-500 rounded-full hover:text-white hover:bg-gray-600 transition-colors flex-shrink-0"
-                 >
-                   {renderSocialIcon(key, svg, label)}
-                 </a>
-               )
-             })}
-           </div>
+                  {renderSocialIcon(key, svg, label)}
+                </a>
+              )
+            })}
+          </div>
         </div>
       </div>
 
       {/* Bottom Toggle Button - Simple Black Triangle */}
       <div className="py-4">
         <div className="flex justify-center">
-          <div 
+          <div
             className="w-[2rem] h-[2rem] flex items-center justify-center cursor-pointer"
             title={isHovered ? 'Collapse' : 'Expand'}
           >
             {/* Simple Black Triangle */}
-            <div 
-              className={`w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent transition-transform duration-300 ${
-                isHovered 
-                  ? 'border-r-[10px] border-r-[var(--endspace-text-primary)] border-l-0' 
-                  : 'border-l-[10px] border-l-[var(--endspace-text-primary)] border-r-0'
-              }`}
+            <div
+              className={`w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent transition-transform duration-300 ${isHovered
+                ? 'border-r-[10px] border-r-[var(--endspace-text-primary)] border-l-0'
+                : 'border-l-[10px] border-l-[var(--endspace-text-primary)] border-r-0'
+                }`}
             />
           </div>
         </div>
