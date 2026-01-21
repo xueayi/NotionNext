@@ -30,10 +30,10 @@ jobs:
         env:
           # 如果你的 NotionNext 版本在编译时需要获取数据，必须加上这个 ID
           NOTION_PAGE_ID: ${{ vars.NOTION_PAGE_ID }} 
-          NEXT_PUBLIC_THEME: ${{ vars.NEXT_PUBLIC_THEME }} # 这里根据你的 endspace 主题配置，或者在 actions 里不写，读你代码里的配置
+          NEXT_PUBLIC_THEME: ${{ vars.NEXT_PUBLIC_THEME_ENDSPACE }} # 这里根据你的 endspace 主题配置，或者在 actions 里不写，读你代码里的配置
         run: |
           echo "Page ID is ${{ vars.NOTION_PAGE_ID }}"
-          echo "Theme is ${{ vars.NEXT_PUBLIC_THEME }}"
+          echo "Theme is ${{ vars.NEXT_PUBLIC_THEME_ENDSPACE }}"
           # 备份原始 package.json
           cp package.json package.json.original
           

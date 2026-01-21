@@ -6,14 +6,14 @@ import CONFIG from '../config'
  */
 export const TitleBar = ({ post }) => {
   // 从配置中读取水印文字，可在config.js中自定义
-  const marqueeText = siteConfig('ENDSPACE_BANNER_WATERMARK_TEXT', 'CLOUD09_SPACE', CONFIG)
+  const marqueeText = siteConfig('ENDSPACE_BANNER_WATERMARK_TEXT', 'XUEAYI_SPACE', CONFIG)
 
   return (
     <div className="relative py-20 md:py-28 border-b-2 border-[var(--endspace-border-base)] overflow-hidden bg-[var(--endspace-bg-base)]">
       {/* Post Cover Image Background - shown on article pages */}
       {post && post.pageCoverThumbnail && (
         <div className="absolute inset-0">
-          <img 
+          <img
             src={post.pageCoverThumbnail}
             alt={post.title || 'Cover'}
             className="w-full h-full object-cover"
@@ -37,7 +37,7 @@ export const TitleBar = ({ post }) => {
         />
       </div>
 
-      {/* Large Background Scrolling Watermark - CLOUD09_SPACE (only on non-article pages) */}
+      {/* Large Background Scrolling Watermark - XUEAYI_SPACE (only on non-article pages) */}
       {!post && (
         <div className="absolute inset-0 flex items-center opacity-[0.15] pointer-events-none overflow-hidden">
           <div className="bg-watermark-scroll whitespace-nowrap leading-none">

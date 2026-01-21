@@ -17,7 +17,7 @@ export const LoadingCover = () => {
   const hasCompletedRef = useRef(false)
 
   // Configurable texts
-  const siteName = siteConfig('ENDSPACE_LOADING_SITE_NAME', null, CONFIG) || siteConfig('TITLE') || 'CLOUD09_SPACE'
+  const siteName = siteConfig('ENDSPACE_LOADING_SITE_NAME', null, CONFIG) || siteConfig('TITLE') || 'XUEAYI_SPACE'
   const textInit = siteConfig('ENDSPACE_LOADING_TEXT_INIT', 'INITIALIZING', CONFIG)
   const textLoading = siteConfig('ENDSPACE_LOADING_TEXT_LOADING', 'LOADING', CONFIG)
   const textComplete = siteConfig('ENDSPACE_LOADING_TEXT_COMPLETE', 'READY', CONFIG)
@@ -39,7 +39,7 @@ export const LoadingCover = () => {
     const updateLoadingProgress = () => {
       const images = document.images
       const total = images.length
-      
+
       if (total === 0) {
         // No images, rely on time-based simulation or waiting for onLoading
         return
@@ -50,8 +50,8 @@ export const LoadingCover = () => {
         loaded++
         const percent = Math.floor((loaded / total) * 100)
         setProgress(prev => {
-           // Ensure we don't regress if multiple updates fire rapidly
-           return Math.max(prev, percent)
+          // Ensure we don't regress if multiple updates fire rapidly
+          return Math.max(prev, percent)
         })
       }
 
@@ -63,7 +63,7 @@ export const LoadingCover = () => {
           images[i].addEventListener('error', trackImage)
         }
       }
-      
+
       // Initial count update
       if (loaded > 0) {
         const percent = Math.floor((loaded / total) * 100)
@@ -76,28 +76,28 @@ export const LoadingCover = () => {
 
     // Also simulation to keep it alive if resources are stuck or few
     const progressInterval = setInterval(() => {
-        setProgress(prev => {
-            // Check if loading is complete from global state
-            if (!onLoading) {
-                 return Math.min(100, prev + 10)
-            }
-            
-            // If we have images, we rely mostly on them, but ensure at least some movement
-            const images = document.images
-            if (images.length > 0) {
-                // If we are waiting for images, we might want to crawl slowly up to 90%
-                // But user wanted "accurate", so maybe we shouldn't fake it too much.
-                // However, standard browser behavior is progressive.
-                // Let's cap tracked progress at 99 until onLoading is false
-                return prev >= 99 ? 99 : prev
-            } else {
-                // Fallback simulation for no-image pages
-                if (prev >= 90) return prev
-                const remaining = 90 - prev
-                // Slow movement
-                return prev + Math.max(0.1, remaining * 0.05)
-            }
-        })
+      setProgress(prev => {
+        // Check if loading is complete from global state
+        if (!onLoading) {
+          return Math.min(100, prev + 10)
+        }
+
+        // If we have images, we rely mostly on them, but ensure at least some movement
+        const images = document.images
+        if (images.length > 0) {
+          // If we are waiting for images, we might want to crawl slowly up to 90%
+          // But user wanted "accurate", so maybe we shouldn't fake it too much.
+          // However, standard browser behavior is progressive.
+          // Let's cap tracked progress at 99 until onLoading is false
+          return prev >= 99 ? 99 : prev
+        } else {
+          // Fallback simulation for no-image pages
+          if (prev >= 90) return prev
+          const remaining = 90 - prev
+          // Slow movement
+          return prev + Math.max(0.1, remaining * 0.05)
+        }
+      })
     }, 100)
 
     const maxWaitTimer = setTimeout(() => {
@@ -118,10 +118,10 @@ export const LoadingCover = () => {
   useEffect(() => {
     if (progress >= 100 && !hasCompletedRef.current) {
       hasCompletedRef.current = true
-      
+
       const completeTimer = setTimeout(() => {
         setPhase('complete')
-        
+
         setTimeout(() => {
           setPhase('sweeping')
           setTimeout(() => {
