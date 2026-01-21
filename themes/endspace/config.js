@@ -22,7 +22,7 @@
  * 示例配置：
  * | Type | Title     | Slug       |
  * |------|-----------|------------|
- * | Menu | AboutMe   | /aboutme   |
+ * | Menu | AboutMe   | /me   |
  * | Menu | Portfolio | /portfolio |
  * | Menu | Friends   | /friends   |
  * 
