@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'yarn'
 
       # 3. 安装依赖 (在 GitHub 的虚拟机上跑，不耗你服务器资源)
       - name: Install Dependencies
