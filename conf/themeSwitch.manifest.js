@@ -16,9 +16,9 @@ export const THEME_SWITCH_MANIFEST = {
     summary: '轻工业终末风，侧栏导航、悬浮控件与加载动画。',
     settings: [
       { key: 'ENDSPACE_LOADING_COVER', label: '加载动画', type: 'boolean', defaultValue: true },
-      { key: 'ENDSPACE_LOADING_SITE_NAME', label: '加载站点名', type: 'text', defaultValue: 'CLOUD09_SPACE' },
-      { key: 'ENDSPACE_BANNER_WATERMARK_TEXT', label: '首页水印文字', type: 'text', defaultValue: 'CLOUD09_SPACE' },
-      { key: 'ENDSPACE_ARTICLE_WATERMARK_TEXT', label: '文章水印文字', type: 'text', defaultValue: 'CLOUD09' },
+      { key: 'ENDSPACE_LOADING_SITE_NAME', label: '加载站点名', type: 'text', defaultValue: 'XUEAYI_SPACE' },
+      { key: 'ENDSPACE_BANNER_WATERMARK_TEXT', label: '首页水印文字', type: 'text', defaultValue: 'XUEAYI_SPACE' },
+      { key: 'ENDSPACE_ARTICLE_WATERMARK_TEXT', label: '文章水印文字', type: 'text', defaultValue: 'XUEAYI_SPACE' },
       { key: 'ENDSPACE_MENU_ARCHIVE', label: '归档菜单', type: 'boolean', defaultValue: true }
     ],
     palette: [

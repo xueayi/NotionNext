@@ -6,7 +6,7 @@ import CONFIG from '../config'
  */
 export const TitleBar = ({ post }) => {
 
-  const marqueeText = siteConfig('ENDSPACE_BANNER_WATERMARK_TEXT', 'CLOUD09_SPACE', CONFIG)
+  const marqueeText = siteConfig('ENDSPACE_BANNER_WATERMARK_TEXT', 'XUEAYI_SPACE', CONFIG)
 
   return (
     <div className="relative py-20 md:py-28 border-b-2 border-[var(--endspace-border-base)] overflow-hidden bg-[var(--endspace-bg-base)]">
