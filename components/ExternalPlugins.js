@@ -50,10 +50,7 @@ const ExternalPlugin = props => {
   const FIREWORKS = siteConfig('FIREWORKS', null, NOTION_CONFIG)
   const SAKURA = siteConfig('SAKURA', null, NOTION_CONFIG)
   const STARRY_SKY = siteConfig('STARRY_SKY', null, NOTION_CONFIG)
-  const THEME = siteConfig('THEME', null, NOTION_CONFIG)
-  // endspace 主题自带播放器（EndspacePlayer），禁用框架全局播放器避免重复显示
-  const MUSIC_PLAYER =
-    siteConfig('MUSIC_PLAYER', null, NOTION_CONFIG) && THEME !== 'endspace'
+  const MUSIC_PLAYER = siteConfig('MUSIC_PLAYER', null, NOTION_CONFIG)
   const NEST = siteConfig('NEST', null, NOTION_CONFIG)
   const FLUTTERINGRIBBON = siteConfig('FLUTTERINGRIBBON', null, NOTION_CONFIG)
   const COMMENT_TWIKOO_COUNT_ENABLE = siteConfig(
