@@ -80,6 +80,11 @@ export const Style = () => {
       /* ============================================
          Global Base Styles
          ============================================ */
+      /* endspace 主题自带音乐播放器（EndspacePlayer），隐藏框架全局 APlayer，避免重复显示 */
+      .aplayer,
+      meting-js {
+        display: none !important;
+      }
       .dark #theme-endspace {
         --endspace-bg-base: var(--endspace-bg-base-dark);
         --endspace-bg-primary: var(--endspace-bg-primary-dark);
